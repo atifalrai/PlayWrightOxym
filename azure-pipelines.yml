@@ -1,0 +1,110 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    exclude:
+      - '*'  # This disables the PR trigger for all branches
+schedules:
+  - cron: "0 11 * * 1-5"  # Runs at 4:00 PM Pakistan time (11:00 AM UTC), Monday to Friday
+    displayName: Daily 4:00 PM PST Run
+    branches:
+      include:
+        - main
+    always: true
+
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+
+stages:
+- stage: __default
+  jobs:
+    - job: Job
+      pool:
+        name: 'QA Pool'  # Use your self-hosted agent pool here
+      timeoutInMinutes: 180  # Increase timeout from 60 to 180 minutes
+
+      steps:
+        - task: NodeTool@0
+          inputs:
+           versionSpec: '20.x'
+          displayName: 'Install Node.js'
+
+        - script: |
+           npm install
+          displayName: 'npm install'
+
+
+        - script: |
+            echo $(System.DefaultWorkingDirectory)\\------path
+          displayName: 'Print Path'
+          condition: always()
+
+        - script: |
+           npx playwright install
+          condition: always()
+          displayName: 'Install Playwright'
+
+        # Pinned to a single project: with all six registered, the JUnit XML
+        # emitted one entry per test per project (264) while the custom HTML
+        # report keys results by test title alone (~43), so the two reports
+        # never agreed. The other five projects were also being killed by the
+        # 1-hour globalTimeout, so nothing but desktop-chrome actually ran.
+        - script: |
+            npx playwright test --project=desktop-chrome
+          condition: always()
+          displayName: 'Run Playwright Tests'
+
+
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFiles: '$(System.DefaultWorkingDirectory)\results\testcases-result.xml'
+            testRunTitle: 'Playwright Tests'
+            testResultsFormat: 'JUnit'
+          condition: succeededOrFailed()  # Always publish test results
+
+        # Step 5: Prepare and Publish Test Reports (optional)
+        - script: |
+            mkdir $(Build.ArtifactStagingDirectory)\TestReports
+            copy $(System.DefaultWorkingDirectory)\custom-report\customreport.html $(Build.ArtifactStagingDirectory)\TestReports\
+          displayName: 'Prepare Customised Test Artifacts'
+          condition: always()
+
+
+        # Step 7a: Copy XML results for stats parsing
+        - script: |
+            copy $(System.DefaultWorkingDirectory)\results\testcases-result.xml $(Build.ArtifactStagingDirectory)\TestReports\
+          displayName: 'Copy Test Summary XML for Stats'
+          condition: always()
+
+        # Step 8: Prepare and Publish Test Reports (optional)
+        - script: |
+            mkdir $(Build.ArtifactStagingDirectory)\TestDefaultReports
+            copy $(System.DefaultWorkingDirectory)\playwright-DefaultReport\index.html $(Build.ArtifactStagingDirectory)\TestDefaultReports\
+          displayName: 'Prepare Default Test Artifacts'
+          condition: always()
+
+
+
+        # Step 9: Publish the test reports as artifacts
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)\TestReports'
+            ArtifactName: 'TestingReports'
+            publishLocation: 'Container'
+          displayName: 'Publish Customised report in Pipeline Artifacts'
+          condition: always()
+
+
+          # Step 10: Publish the test reports as artifacts
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)\TestDefaultReports'
+            ArtifactName: 'TestingReports'
+            publishLocation: 'Container'
+          displayName: 'Publish Default report in Pipeline Artifacts'
+          condition: always()

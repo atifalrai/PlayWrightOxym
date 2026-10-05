@@ -1,0 +1,12 @@
+test-results/*
+!test-results/.gitkeep
+results/*
+!results/.gitkeep
+custom-report/*
+!custom-report/.gitkeep
+playwright-DefalutReport/*
+!playwright-DefalutReport/.gitkeep
+playwright-report/
+.playwright-mcp/
+.vs/
+.cursor/

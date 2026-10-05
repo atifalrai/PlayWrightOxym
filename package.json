@@ -1,0 +1,28 @@
+{
+  "scripts": {
+    "test": "playwright test --project=desktop-chrome",
+    "test:notes": "playwright test tests/Notes.spec.js --grep @stateful --workers=1",
+    "test:wallet": "playwright test tests/Wallet.spec.js --grep @stateful --workers=1",
+    "test:cross-browser": "playwright test --grep-invert @stateful",
+    "test:all": "playwright test --workers=1",
+    "test:desktop": "playwright test --project=desktop-chrome --project=desktop-edge --project=desktop-safari-mac",
+    "test:ios": "playwright test --project=iphone-14-pro --project=iphone-16 --project=iphone-se --project=iphone-12 --project=ipad --project=ipad-pro",
+    "test:android": "playwright test --project=galaxy-s22 --project=galaxy-s24 --project=pixel-7 --project=galaxy-s9-plus --project=galaxy-tab-s4",
+    "test:chrome": "playwright test --project=desktop-chrome",
+    "test:edge": "playwright test --project=desktop-edge",
+    "test:safari": "playwright test --project=desktop-safari-mac",
+    "browsers:install": "playwright install chromium webkit"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.8.0",
+    "@playwright/mcp": "^0.0.75",
+    "@playwright/test": "^1.52.0",
+    "@testmo/testmo-cli": "^1.4.4",
+    "start-server-and-test": "^2.0.12"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "mcp-server": "^0.0.9",
+    "playwright-core": "^1.53.0"
+  }
+}
